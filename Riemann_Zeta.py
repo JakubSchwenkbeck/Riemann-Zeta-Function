@@ -15,3 +15,4 @@ zeta_values = np.array([riemann_zeta(sigma + t*1j) for sigma in sigma])
 x = np.linspace(0, 2 * np.pi, 100)
 y2 = np.sin(x)
 
+# Need to add more variants 
