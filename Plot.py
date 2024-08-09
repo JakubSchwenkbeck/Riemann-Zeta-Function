@@ -8,6 +8,8 @@ plt.subplots_adjust(bottom=0.2)  # Adjust the plot to make room for the button
 plot1, = ax.plot(sigma, np.abs(zeta_values), label=r'$|ζ(σ+it)|$')
 ax.axhline(0, color='black', linewidth=0.5)
 critical_line = ax.axvline(1, color='red', linestyle='--', label='Critical Line $σ=1$')
+# still problems with switcher
+
 
 ax.set_xlabel(r'$σ$')
 ax.set_ylabel(r'$|ζ(σ+it)|$')
