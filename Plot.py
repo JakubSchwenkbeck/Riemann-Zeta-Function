@@ -7,7 +7,7 @@ plt.subplots_adjust(bottom=0.2)  # Adjust the plot to make room for the button
 # Initial plot (plot1: Magnitude of the Riemann Zeta Function)
 plot1, = ax.plot(sigma, np.abs(zeta_values), label=r'$|ζ(σ+it)|$')
 ax.axhline(0, color='black', linewidth=0.5)
-critical_line = ax.axvline(1, color='red', linestyle='--', label='Critical Line $σ=1$')
+AXVLINE = ax.axvline(1, color='red', linestyle='--', label='Critical Line $σ=1$')
 # still problems with switcher
 
 
@@ -17,27 +17,30 @@ ax.set_title(r'Magnitude of the Riemann Zeta Function for $t=14.134725$')
 ax.legend()
 ax.grid(True)
 
-# Store plot1 data for switching back
-plot1_data = (sigma, np.abs(zeta_values), r'$|ζ(σ+it)|$', r'Magnitude of the Riemann Zeta Function for $t=14.134725$', r'$σ$', r'$|ζ(σ+it)|$')
 
+def show_standard_zeta():
+    plot1.set_xdata(sigma)
+    plot1.set_ydata( np.abs(zeta_values))
+    ax.set_xlabel(r'Magnitude of the Riemann Zeta Function for $t=14.134725$')
+    ax.set_ylabel( r'$σ$')
+    ax.set_title(r'$|ζ(σ+it)|$')
+    AXVLINE.set_visible(True)
 # Function to switch plots
 def switch(event):
     if plot1.get_xdata().all() == sigma.all():
+        # placeholder:
         # Switch to sine plot
         plot1.set_xdata(x)
         plot1.set_ydata(y2)
         ax.set_xlabel('x')
         ax.set_ylabel('sin(x)')
         ax.set_title('Sine Wave')
-        critical_line.set_visible(False)  # Hide the critical line
+        AXVLINE.set_visible(False) #ax.axvline(1, color='black', linestyle='--', label='Critical Line $σ=1$') # Hide the critical line
     else:
         # Switch back to the original zeta plot
-        plot1.set_xdata(plot1_data[0])
-        plot1.set_ydata(plot1_data[1])
-        ax.set_xlabel(plot1_data[4])
-        ax.set_ylabel(plot1_data[5])
-        ax.set_title(plot1_data[3])
-        critical_line.set_visible(True)  # Hide the critical line
+        show_standard_zeta()
+        
+        
     ax.legend()
     plt.draw()  # Redraw the plot
 
@@ -50,3 +53,11 @@ button.on_clicked(switch)
 
 plt.show()
 
+
+
+
+    
+    
+
+    
+    
