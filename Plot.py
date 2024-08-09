@@ -6,6 +6,14 @@ fig, ax = plt.subplots(figsize=(10, 6))
 plt.subplots_adjust(bottom=0.2)  # Adjust the plot to make room for the button
 
 
+fig.canvas.manager.set_window_title('Riemann Hypothesis')
+
+
+icon_path = 'C:/Users/jakub/Python/rzeta.ico'  # Replace with your .ico file path
+
+fig.canvas.manager.window.wm_iconbitmap(icon_path)
+
+
 global plotstate
 plotstate = 0
 
@@ -20,7 +28,7 @@ DICT_PLOTSTATE = {
 
 
 def show_prim_approx(limit):
-    ax.clear()
+  
     xdata = range(0,limit)
     
     ydata_actual_primes = prim_acutal(limit)
@@ -43,26 +51,34 @@ def show_prim_approx(limit):
 
 # Show standrad zeta function 
 def show_standard_zeta():
-    ax.plot(sigma,np.abs(zeta_values),label =r"Zetafunction",color = 'black')
+   
+    print("Cleared")
+    xdata = sigma
+    ydata = np.abs(zeta_values)
+    print("new plot")
+    ax.plot(xdata,ydata ,label =r"Zetafunction",color = 'black')
     ax.set_xlabel(r'$σ$')
     ax.set_ylabel(r'$|ζ(σ+it)|$')
     ax.set_title(r'Magnitude of the Riemann Zeta Function for $t=14.134725$')
     ax.axvline(1, color='red', linestyle='--')
     ax.legend()
+    print("Finished and draw")
     plt.draw()  # Redraw the plot
 
 # Function to switch plots
 def switch(event):
     global plotstate
-    print(plotstate)
-    
+   
     if (plotstate == DICT_PLOTSTATE['ZETA_STANDARD']):
  # Switch back to the original zeta plot
-        show_standard_zeta()   
+        ax.clear()
+        #show_standard_zeta()   
         plotstate = 0
+        
   
     if(plotstate == DICT_PLOTSTATE['PRIM_APPROX']):
-        show_prim_approx(100000)
+        ax.clear()
+       # show_prim_approx(100000)
         plotstate = 1
        
         
@@ -76,9 +92,7 @@ button = Button(ax_button, 'Switch Plot')
 # Assign the switch function to the button
 button.on_clicked(switch)
 
-show_standard_zeta()
-    
-plt.show()
+plt.show()  
 
     
 
