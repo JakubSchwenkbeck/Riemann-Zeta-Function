@@ -3,17 +3,18 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 
 
-# Defining the Prim approximation with actual, li(x), pi(x)
+# Defining the Prim approximation with actual which is pi(x), li(x), and x/logx
 
 def sieve_of_eratosthenes(limit):
-   prime = [True for i in range(limit+1)]
+   prime = [True for i in range(limit)]
+   prime[0]= prime[1] = False
    p = 2
    while(p*p <limit):
        
     if (prime[p] == True):
         
         for i in range(p*p,limit,p):
-            prime(i) = False
+            prime[i] = False
             
         p+= 1 
      
@@ -21,9 +22,29 @@ def sieve_of_eratosthenes(limit):
         
     
     
-def prim_approx(limit):
+def prim_acutal(limit):
     res = sieve_of_eratosthenes(limit)
+    count = 0
     
+    for i in range(limit):
+        if(res[i] == True ):
+            count += 1
+            res[i] = count
+        else:
+            res[i] = count
+
+    return res
+    
+
+def logarithmic_primes(limit):
+    res = [0 for i in range(limit)] 
+    res[0] = res[1] = 0
+    for i in range(2,limit):
+            
+        res[i] = int( i / np.log(i))
+            
+    return res
+        
 
 
 
@@ -45,3 +66,6 @@ x = np.linspace(0, 4*np.pi, 100)
 y2 = np.sin(x)
 
 # Need to add more variants 
+
+x = logarithmic_primes(1000000000)
+print(x[999999999])
