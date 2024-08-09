@@ -1,5 +1,5 @@
 from Riemann_Zeta import *
-
+import numpy as np
 # Create the figure
 fig, ax = plt.subplots(figsize=(10, 6))
 plt.subplots_adjust(bottom=0.2)  # Adjust the plot to make room for the button
@@ -29,8 +29,18 @@ ax.grid(True)
 
 
 
-def show_prim_approx():
-    5
+def show_prim_approx(limit):
+    xdata = range(0,limit)
+    
+    ydata_actual_primes = prim_acutal(limit)
+    
+    plot2 = ax.plot(xdata,ydata_actual_primes,label =r"Actual Prime numbers",color = 'blue')
+    
+    ydata_logarithmic_primes = logarithmic_primes(limit)
+    plot2 = ax.plot(xdata,ydata_logarithmic_primes,label =r"$\ frac{x}{log{x}}$ Apprxomation",color = 'red')
+    ax.set_xlabel('x')
+    ax.set_ylabel('Number of primes up to x') 
+    ax.set_title('Comparison of Prime approximations')
 
 
 
@@ -57,15 +67,9 @@ def switch(event):
  # Switch back to the original zeta plot
         show_standard_zeta()   
         plotstate = plotstate+1
+        plot1.set_visible(True)
     else:
-       
-     # placeholder:
-        # Switch to sine plot
-        plot1.set_xdata(x)
-        plot1.set_ydata(y2)
-        ax.set_xlabel('x')
-        ax.set_ylabel('sin(x)')
-        ax.set_title('Sine Wave')
+        show_prim_approx(200)
         AXVLINE.set_label = ' '
         AXVLINE.set_visible(False) # Hide the critical line    
         plotstate = plotstate-1
