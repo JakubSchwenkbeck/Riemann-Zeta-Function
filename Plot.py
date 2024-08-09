@@ -1,5 +1,6 @@
 from Riemann_Zeta import *
 import numpy as np
+
 # Create the figure
 fig, ax = plt.subplots(figsize=(10, 6))
 plt.subplots_adjust(bottom=0.2)  # Adjust the plot to make room for the button
@@ -19,13 +20,18 @@ DICT_PLOTSTATE = {
 
 
 def show_prim_approx(limit):
+    ax.clear()
     xdata = range(0,limit)
     
     ydata_actual_primes = prim_acutal(limit)
-    plot2 = ax.plot(xdata,ydata_actual_primes,label =r"Actual Prime numbers",color = 'blue')
+    ax.plot(xdata,ydata_actual_primes,label =r"Actual Prime numbers",color = 'blue',linewidth = 5)
     
     ydata_logarithmic_primes = logarithmic_primes(limit)
-    plot2 = ax.plot(xdata,ydata_logarithmic_primes,label =r"$\ frac{x}{log{x}}$ Apprxomation",color = 'red')
+    ax.plot(xdata,ydata_logarithmic_primes,label =r"$\frac{x}{\log(x)}$ Approximation",color = 'yellow')
+     
+    ydata_LI = Li_function(limit)
+    ax.plot(xdata,ydata_LI,label =r"$\mathrm{Li}(x)$ Approximation",color = 'red')
+   
     ax.set_xlabel('x')
     ax.set_ylabel('Number of primes up to x') 
     ax.set_title('Comparison of Prime approximations')
@@ -37,7 +43,7 @@ def show_prim_approx(limit):
 
 # Show standrad zeta function 
 def show_standard_zeta():
-    plot1 = ax.plot(sigma,np.abs(zeta_values),label =r"Zetafunction",color = 'black')
+    ax.plot(sigma,np.abs(zeta_values),label =r"Zetafunction",color = 'black')
     ax.set_xlabel(r'$σ$')
     ax.set_ylabel(r'$|ζ(σ+it)|$')
     ax.set_title(r'Magnitude of the Riemann Zeta Function for $t=14.134725$')
@@ -48,7 +54,7 @@ def show_standard_zeta():
 # Function to switch plots
 def switch(event):
     global plotstate
-    
+    print(plotstate)
     
     if (plotstate == DICT_PLOTSTATE['ZETA_STANDARD']):
  # Switch back to the original zeta plot
