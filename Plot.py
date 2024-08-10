@@ -123,29 +123,29 @@ class RiemannZetaVisualizer(QWidget):
         angle = np.angle(z)
 
         # Plot the magnitude as a contour plot
-        magnitude_trace = go.Contour(
-            x=x[0],
-            y=y[:, 0],
-            z=magnitude,
-            colorscale='Viridis',
-            colorbar=dict(title='Magnitude'),
-            contours=dict(showlabels=True),
-            name='Magnitude'
-        )
+        # magnitude_trace = go.Contour(
+        #     x=x[0],
+        #     y=y[:, 0],
+        #     z=magnitude,
+        #     colorscale='Viridis',
+        #     colorbar=dict(title='Magnitude'),
+        #    # contours=dict(showlabels=True),
+        #     name='Magnitude'
+        # )
 
-        # Plot the phase as another contour plot
+      #  Plot the phase as another contour plot
         angle_trace = go.Contour(
             x=x[0],
             y=y[:, 0],
             z=angle,
             colorscale='Cividis',
             colorbar=dict(title='Phase'),
-            contours=dict(showlabels=True),
+            #contours=dict(showlabels=True),
             name='Phase',
             opacity=0.5
         )
 
-        fig = go.Figure(data=[magnitude_trace, angle_trace])
+        fig = go.Figure(data=angle_trace)#[magnitude_trace, angle_trace])
 
         # Highlight the critical line (real part = 0.5)
         critical_line_y = np.linspace(y.min(), y.max(), 100)
