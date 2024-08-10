@@ -1,5 +1,19 @@
-# Riemann Zeta Function
+# **Riemann Hypothesis Zeta Function Visualizer**
 
-Using Pyhon with numpy and plotly, i simulate the riemann zeta function
+Using **Python** together with NumPy, Plotly and PyQt5 this project creates a GUI which displays different plots of functions related to the **Riemann Hypothesis**
 
-![image](https://github.com/user-attachments/assets/c32606fc-4595-4236-91ee-238927392986)
+
+**Example Plots :**  
+ - Count of Prime Numbers and Approximation Functions:
+
+
+
+ - Standard real Zeta function with set magnitude t:
+
+
+
+
+ - Complex Zeta function displayed in a 2D grid, showing trivial zeros and critical line with non-trivial zeros
+
+
+
