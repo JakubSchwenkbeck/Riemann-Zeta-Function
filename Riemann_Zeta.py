@@ -5,6 +5,7 @@ from scipy.special import expi
 
 # Defining the Prim approximation with actual which is pi(x), li(x), and x/logx
 
+# Counting the real number of primes using the sieve of eratosthenes
 def sieve_of_eratosthenes(limit):
   sieve= np.ones(limit,dtype=bool)
   sieve[:2] = False
@@ -15,7 +16,7 @@ def sieve_of_eratosthenes(limit):
   return sieve
         
     
-    
+    # get the count of prime numbers up to a limit
 def prim_acutal(limit):
     sieve = sieve_of_eratosthenes(limit)
     count = 0
@@ -29,7 +30,7 @@ def prim_acutal(limit):
 
     return result
     
-
+# get the logrithmic estimation of prime numbers to a limit
 def logarithmic_primes(limit):
     res = [0 for i in range(limit)] 
     res[0] = res[1] = 0
@@ -38,7 +39,8 @@ def logarithmic_primes(limit):
         res[i] = int( i / np.log(i))
             
     return res
-        
+     
+# get the li function approximation    
 def Li_function(limit):
     
     res = [0 for i in range(limit)] 
@@ -54,7 +56,7 @@ def Li_function(limit):
 
 
 
-
+# standard 2D Zeta function with a t
 def riemann_zeta(s, n_terms=1000):
     return sum(1/n**s for n in range(1, n_terms + 1))
 
