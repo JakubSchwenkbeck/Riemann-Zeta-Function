@@ -1,100 +1,98 @@
-from Riemann_Zeta import *
+import sys
 import numpy as np
+import plotly.graph_objs as go
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import QUrl
+import tempfile
+import os
 
-# Create the figure
-fig, ax = plt.subplots(figsize=(10, 6))
-plt.subplots_adjust(bottom=0.2)  # Adjust the plot to make room for the button
+# Assuming Riemann_Zeta contains the required functions
+from Riemann_Zeta import *  # Replace with your import paths
 
+class RiemannZetaVisualizer(QWidget):
+    def __init__(self):
+        super().__init__()
 
-fig.canvas.manager.set_window_title('Riemann Hypothesis')
+        self.plotstate = 0
+        self.initUI()
 
+    def initUI(self):
+        layout = QVBoxLayout()
 
-icon_path = 'C:/Users/jakub/Python/rzeta.ico'  # Replace with your .ico file path
+        # Button to switch plots
+        self.switch_button = QPushButton('Switch Plot', self)
+        self.switch_button.clicked.connect(self.switch)
+        layout.addWidget(self.switch_button)
 
-fig.canvas.manager.window.wm_iconbitmap(icon_path)
+        # Web view to display Plotly plots
+        self.web_view = QWebEngineView()
+        layout.addWidget(self.web_view)
 
+        self.setLayout(layout)
+        self.setWindowTitle('Riemann Hypothesis')
 
-global plotstate
-plotstate = 0
+        # Start with the prime approximation plot
+        self.show_prim_approx(100000)
 
+    def show_prim_approx(self, limit):
+        # Generate x data
+        xdata = np.arange(0, limit)
 
+        # Generate y data for different approximations
+        ydata_actual_primes = prim_acutal(limit)
+        trace1 = go.Scatter(x=xdata, y=ydata_actual_primes, mode='lines', name="Actual Primes", line=dict(color='blue', width=5))
 
-DICT_PLOTSTATE = {
-    'PRIM_APPROX' : 0,
-    'ZETA_STANDARD' : 1
-}
+        ydata_logarithmic_primes = logarithmic_primes(limit)
+        trace2 = go.Scatter(x=xdata, y=ydata_logarithmic_primes, mode='lines', name="Logarithmic Primes", line=dict(color='yellow', width=2))
 
- 
+        ydata_LI = Li_function(limit)
+        trace3 = go.Scatter(x=xdata, y=ydata_LI, mode='lines', name="Li Approximation", line=dict(color='red', width=2))
 
-
-def show_prim_approx(limit):
-  
-    xdata = range(0,limit)
-    
-    ydata_actual_primes = prim_acutal(limit)
-    ax.plot(xdata,ydata_actual_primes,label =r"Actual Prime numbers",color = 'blue',linewidth = 5)
-    
-    ydata_logarithmic_primes = logarithmic_primes(limit)
-    ax.plot(xdata,ydata_logarithmic_primes,label =r"$\frac{x}{\log(x)}$ Approximation",color = 'yellow')
-     
-    ydata_LI = Li_function(limit)
-    ax.plot(xdata,ydata_LI,label =r"$\mathrm{Li}(x)$ Approximation",color = 'red')
-   
-    ax.set_xlabel('x')
-    ax.set_ylabel('Number of primes up to x') 
-    ax.set_title('Comparison of Prime approximations')
-    ax.legend()
-    plt.draw()  # Redraw the plot
-
-
-
-
-# Show standrad zeta function 
-def show_standard_zeta():
-   
-    print("Cleared")
-    xdata = sigma
-    ydata = np.abs(zeta_values)
-    print("new plot")
-    ax.plot(xdata,ydata ,label =r"Zetafunction",color = 'black')
-    ax.set_xlabel(r'$σ$')
-    ax.set_ylabel(r'$|ζ(σ+it)|$')
-    ax.set_title(r'Magnitude of the Riemann Zeta Function for $t=14.134725$')
-    ax.axvline(1, color='red', linestyle='--')
-    ax.legend()
-    print("Finished and draw")
-    plt.draw()  # Redraw the plot
-
-# Function to switch plots
-def switch(event):
-    global plotstate
-   
-    if (plotstate == DICT_PLOTSTATE['ZETA_STANDARD']):
- # Switch back to the original zeta plot
-        ax.clear()
-        #show_standard_zeta()   
-        plotstate = 0
+        # Create layout and figure
+        layout = go.Layout(title="Comparison of Prime Approximations", xaxis_title="x", yaxis_title="Number of Primes", legend_title="Legend")
+        fig = go.Figure(data=[trace1, trace2, trace3], layout=layout)
         
-  
-    if(plotstate == DICT_PLOTSTATE['PRIM_APPROX']):
-        ax.clear()
-       # show_prim_approx(100000)
-        plotstate = 1
+        # Render the plot and display it in the web view
+        self.display_plot(fig)
+
+    def show_standard_zeta(self):
+        # Generate sigma data
        
+        # Create trace for zeta function
+        trace = go.Scatter(x=sigma, y=np.abs(zeta_values), mode='lines', name="Zeta Function", line=dict(color='black', width=2))
+
+        # Create layout and figure
+        layout = go.Layout(title="Magnitude of the Riemann Zeta Function for t=14.134725", xaxis_title="σ", yaxis_title="|ζ(σ+it)|", legend_title="Legend")
+        fig = go.Figure(data=[trace], layout=layout)
+
+        # Add a vertical line at σ = 1
+        fig.add_shape(type="line", x0=1, y0=0, x1=1, y1=max(np.abs(zeta_values)), line=dict(color="red", width=2, dash="dash"))
         
-        
-        
+        # Render the plot and display it in the web view
+        self.display_plot(fig)
 
-# Create the button
-ax_button = plt.axes([0.7, 0.05, 0.1, 0.075])  # Position of the button
-button = Button(ax_button, 'Switch Plot')
+    def display_plot(self, fig):
+        # Write the Plotly figure to a temporary HTML file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as tmpfile:
+            fig.write_html(tmpfile.name)
+            tmpfile.flush()
+            self.web_view.setUrl(QUrl.fromLocalFile(tmpfile.name))
 
-# Assign the switch function to the button
-button.on_clicked(switch)
+    def switch(self):
+        # Toggle between plots
+        if self.plotstate == 0:
+            self.show_standard_zeta()
+            self.plotstate = 1
+        else:
+            self.show_prim_approx(100000)
+            self.plotstate = 0
 
-plt.show()  
+def main():
+    app = QApplication(sys.argv)
+    ex = RiemannZetaVisualizer()
+    ex.show()  # Ensure the widget is shown
+    sys.exit(app.exec_())
 
-    
-
-    
-    
+if __name__ == '__main__':
+    main()
