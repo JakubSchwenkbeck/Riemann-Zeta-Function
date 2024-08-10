@@ -29,7 +29,8 @@ class RiemannZetaVisualizer(QWidget):
         self.plot_buttons = [] # Buttons to switch between plots
         plots = [
             ("Prime Approximation", self.show_prim_approx),
-            ("Standard Zeta 2D", self.show_standard_zeta),  # Add more plots as needed
+            ("Standard Zeta 2D", self.show_standard_zeta),
+            ("complex Zeta 2D", self.plot_zeta_function),# Add more plots as needed
         ]
 
         for plot_name, plot_func in plots: # init and add Buttons
@@ -41,12 +42,14 @@ class RiemannZetaVisualizer(QWidget):
         # Web view to display Plotly plots
         self.web_view = QWebEngineView()
         layout.addWidget(self.web_view)
+        
+        self.resize(1200, 800)  # Width, Height in pixels
 
         self.setLayout(layout)
         self.setWindowTitle('Riemann Hypothesis')
 
         # Start with the first plot
-        self.show_prim_approx()
+        self.plot_zeta_function()
         
         # Function to show the prime number approximations
     def show_prim_approx(self):
@@ -98,14 +101,82 @@ class RiemannZetaVisualizer(QWidget):
         # Render the plot and display it in the web view
         self.display_plot(fig)
 
-    def display_plot(self, fig):
-        # Write the Plotly figure to a temporary HTML file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as tmpfile:
-            fig.write_html(tmpfile.name)
-            tmpfile.flush()
-            self.web_view.setUrl(QUrl.fromLocalFile(tmpfile.name))
+    def plot_zeta_function(self):
+        # Parameters for the zeta function plot
+        x_min = -10
+        x_max = 2
+        y_min = -10
+        y_max = 10
+        resolution = 50  # Increase for higher resolution
 
-    
+        # Calculate the zeta function over the grid
+        x, y, z = calculate_zeta_function(x_min, x_max, y_min, y_max, resolution)
+
+        #Plot the Riemann zeta function values.
+        """"
+        Args:
+            x (numpy.ndarray): Real parts.
+            y (numpy.ndarray): Imaginary parts.
+            z (numpy.ndarray): Zeta function values.
+        """
+        magnitude = np.abs(z)
+        angle = np.angle(z)
+
+        # Plot the magnitude as a contour plot
+        magnitude_trace = go.Contour(
+            x=x[0],
+            y=y[:, 0],
+            z=magnitude,
+            colorscale='Viridis',
+            colorbar=dict(title='Magnitude'),
+            contours=dict(showlabels=True),
+            name='Magnitude'
+        )
+
+        # Plot the phase as another contour plot
+        angle_trace = go.Contour(
+            x=x[0],
+            y=y[:, 0],
+            z=angle,
+            colorscale='Cividis',
+            colorbar=dict(title='Phase'),
+            contours=dict(showlabels=True),
+            name='Phase',
+            opacity=0.5
+        )
+
+        fig = go.Figure(data=[magnitude_trace, angle_trace])
+
+        # Highlight the critical line (real part = 0.5)
+        critical_line_y = np.linspace(y.min(), y.max(), 100)
+        critical_line_x = np.full_like(critical_line_y, 0.5)
+        fig.add_trace(go.Scatter(x=critical_line_x, y=critical_line_y, mode='lines', name='Critical Line',
+                                line=dict(color='red', width=2)))
+
+        # Highlight the trivial zeros (real part = -2, -4, -6, ...)
+        trivial_zeros_x = np.array([-2, -4, -6, -8, -10])
+        trivial_zeros_y = np.zeros_like(trivial_zeros_x)
+        fig.add_trace(go.Scatter(x=trivial_zeros_x, y=trivial_zeros_y, mode='markers', name='Trivial Zeros',
+                                marker=dict(color='blue', size=10)))
+
+        fig.update_layout(
+            title='Riemann Zeta Function',
+            xaxis_title='Real Part',
+            yaxis_title='Imaginary Part',
+            width=1200,
+            height=800
+        )
+
+        # Show the plot in a web browser
+        self.display_plot(fig)
+        
+    def display_plot(self, fig):
+        # Save the plot as an HTML file in a temporary directory
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as f:
+            fig.write_html(f.name)
+            url = QUrl.fromLocalFile(f.name)
+            self.web_view.setUrl(url)
+
 def main():
     app = QApplication(sys.argv)
     ex = RiemannZetaVisualizer()
