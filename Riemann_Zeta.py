@@ -71,7 +71,7 @@ zeta_values = np.array([standard_riemann_zeta(sigma + t * 1j) for sigma in sigma
 
 import numpy as np
 
-def zeta(s, num_terms=10000):
+def zeta(s, num_terms=1000):
     """
     Approximate the Riemann zeta function for a complex input s (which can be an array)
     using a truncated Dirichlet series.
