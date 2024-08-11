@@ -1,25 +1,26 @@
 import sys
+
 import numpy as np
-import plotly.graph_objs as go
-from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton
+
+import plotly.graph_objs as go # Plotly for graphs and plots
+
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton # PyWt5 for GUI and widgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QIcon
 import tempfile
-from plotly.subplots import make_subplots
+
+from Riemann_Zeta import *  # own zeta function
 
 
-
-# Assuming Riemann_Zeta contains the required functions
-from Riemann_Zeta import *  # Replace with your import paths
-
+# Class handeling the Plots
 class RiemannZetaVisualizer(QWidget):
     PrimeApproxBuffer = 0 # Buffer for the values of the PrimeApproximation
     PrimeApproxLimit = 100000
     
-    Zeta_3D_Buffer = None
-
+    Zeta_3D_Buffer = None # buffer to decrease loading times
     Zeta_3D_Buffer_zeros = None
+    
     def __init__(self): # init the window
         super().__init__()
         
@@ -34,11 +35,11 @@ class RiemannZetaVisualizer(QWidget):
 
         self.plot_buttons = [] # Buttons to switch between plots
         plots = [
-            ("Prime Approximation", self.show_prim_approx),
-            ("Standard Zeta 2D", self.show_standard_zeta),
-            ("complex Zeta 2D", self.plot_zeta_function),
-            ("Complex Zeta 3D", self.show_Zeta_3D),
-            ("Complex Zeta 3D with Focus on critical strip", self.show_Zeta_3D_critical_strip),# Add more plots as needed
+            ("Comparisions of Prime Number Approximations", self.show_prim_approx),
+            ("Standard Zeta-function in 2D with variable magnitude", self.show_standard_zeta),
+            ("Complex Zeta-function in 2D plane", self.plot_zeta_function),
+            ("Complex Zeta-function in 3D", self.show_Zeta_3D),
+            ("Complex Zeta-function in 3D with Focus on critical strip", self.show_Zeta_3D_critical_strip),# Add more plots as needed
         ]
 
         for plot_name, plot_func in plots: # init and add Buttons
@@ -46,21 +47,6 @@ class RiemannZetaVisualizer(QWidget):
             button.clicked.connect(lambda checked, func=plot_func: func())
             layout.addWidget(button)
             self.plot_buttons.append(button)
-
-
-        # steps = []
-        # for i in range(self.PrimeApproxLimit):
-        #     step = dict(method = "restyle",args = ["visible", [False]*self.PrimeApproxLimit],)
-            
-        # step["args"][1][i] = True
-        # steps.append(step)
-        # sliders = [dict(active = 100000,steps = steps)]
-        # layout.addWidget(sliders)
-            
-        
-
-
-
 
         # Web view to display Plotly plots
         self.web_view = QWebEngineView()
@@ -111,7 +97,7 @@ class RiemannZetaVisualizer(QWidget):
             self.PrimeApproxBuffer = [ydata_actual_primes,ydata_logarithmic_primes,ydata_LI]
 
     def show_standard_zeta(self):
-                # Define the range of σ (real part of s)
+        # Define the range of σ (real part of s)
         sigma = np.linspace(0.5, 1.5, 400)
 
         # Define a range for t (imaginary part of s) for the slider
@@ -123,7 +109,7 @@ class RiemannZetaVisualizer(QWidget):
         # Calculate the initial zeta values for the initial t
         zeta_values = np.array([standard_riemann_zeta(sigma + initial_t * 1j) for sigma in sigma])
 
-            #  Create the initial trace for the zeta function plot
+        #  Create the initial trace for the zeta function plot
         trace = go.Scatter(x=sigma, y=np.abs(zeta_values), mode='lines', name="Zeta Function", line=dict(color='black', width=2))
 
         # Add a vertical line at σ = 1
@@ -158,12 +144,13 @@ class RiemannZetaVisualizer(QWidget):
             steps=steps
         )]
 
-# Add the slider to the layout
+    # Add the slider to the layout
         fig.update_layout(sliders=sliders)
 
-# Render the plot and display it in the web view
+    # Render the plot and display it in the web view
         self.display_plot(fig)
 
+    # plot the zeta function with complex numbers in 2D
     def plot_zeta_function(self):
         # Parameters for the zeta function plot
         x_min = -10
@@ -230,6 +217,8 @@ class RiemannZetaVisualizer(QWidget):
 
         # Show the plot in a web browser
         self.display_plot(fig)
+
+    #plot the zeta function with complex inputs in 3D
     def show_Zeta_3D(self):
         # Define the real and imaginary parts of s
         re_vals = np.linspace(-1, 1, 200)
@@ -256,7 +245,7 @@ class RiemannZetaVisualizer(QWidget):
                             zaxis_title='|ζ(s)|'))
 
         self.display_plot(fig)
-    
+    # plot the zeta function in 3D with emphasis on the critical strip
     def show_Zeta_3D_critical_strip(self):
                 # Define the real and imaginary parts of s, focusing on the critical strip
         re_vals = np.linspace(0, 1, 200)  # Focus on 0 < Re(s) < 1
@@ -307,6 +296,8 @@ class RiemannZetaVisualizer(QWidget):
                   "The plot focuses on the critical strip where 0 < Re(s) < 1.\n" \
                   "Highlighted are some of the first non-trivial zeros on the critical line (Re(s) = 0.5)."
 
+        # Add information Text
+        
         fig.update_layout(
             annotations=[
                 dict(
