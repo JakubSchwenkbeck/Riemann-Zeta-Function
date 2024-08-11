@@ -8,12 +8,18 @@ from PyQt5.QtGui import QIcon
 import tempfile
 import os
 
+
+
 # Assuming Riemann_Zeta contains the required functions
 from Riemann_Zeta import *  # Replace with your import paths
 
 class RiemannZetaVisualizer(QWidget):
     PrimeApproxBuffer = 0 # Buffer for the values of the PrimeApproximation
+    PrimeApproxLimit = 100000
     
+    Zeta_3D_Buffer = None
+
+    Zeta_3D_Buffer_zeros = None
     def __init__(self): # init the window
         super().__init__()
         
@@ -30,7 +36,9 @@ class RiemannZetaVisualizer(QWidget):
         plots = [
             ("Prime Approximation", self.show_prim_approx),
             ("Standard Zeta 2D", self.show_standard_zeta),
-            ("complex Zeta 2D", self.plot_zeta_function),# Add more plots as needed
+            ("complex Zeta 2D", self.plot_zeta_function),
+            ("Complex Zeta 3D", self.show_Zeta_3D),
+            ("Complex Zeta 3D with zeros", self.show_Zeta_3D_zeros),# Add more plots as needed
         ]
 
         for plot_name, plot_func in plots: # init and add Buttons
@@ -38,6 +46,21 @@ class RiemannZetaVisualizer(QWidget):
             button.clicked.connect(lambda checked, func=plot_func: func())
             layout.addWidget(button)
             self.plot_buttons.append(button)
+
+
+        # steps = []
+        # for i in range(self.PrimeApproxLimit):
+        #     step = dict(method = "restyle",args = ["visible", [False]*self.PrimeApproxLimit],)
+            
+        # step["args"][1][i] = True
+        # steps.append(step)
+        # sliders = [dict(active = 100000,steps = steps)]
+        # layout.addWidget(sliders)
+            
+        
+
+
+
 
         # Web view to display Plotly plots
         self.web_view = QWebEngineView()
@@ -53,7 +76,7 @@ class RiemannZetaVisualizer(QWidget):
         
         # Function to show the prime number approximations
     def show_prim_approx(self):
-        limit = 100000
+        limit = self.PrimeApproxLimit
         # Generate x data
         xdata = np.arange(0, limit)
 
@@ -107,7 +130,7 @@ class RiemannZetaVisualizer(QWidget):
         x_max = 2
         y_min = -10
         y_max = 10
-        resolution = 50  # Increase for higher resolution
+        resolution = 40  # Increase for higher resolution
 
         # Calculate the zeta function over the grid
         x, y, z = calculate_zeta_function(x_min, x_max, y_min, y_max, resolution)
@@ -163,13 +186,86 @@ class RiemannZetaVisualizer(QWidget):
             title='Riemann Zeta Function',
             xaxis_title='Real Part',
             yaxis_title='Imaginary Part',
-            width=1200,
-            height=800
         )
 
         # Show the plot in a web browser
         self.display_plot(fig)
+    def show_Zeta_3D(self):
+        # Define the real and imaginary parts of s
+        re_vals = np.linspace(0, 1, 200)
+        im_vals = np.linspace(-30, 30, 400)
+
+        # Create a meshgrid for the real and imaginary values
+        Re, Im = np.meshgrid(re_vals, im_vals)
+        s = Re + 1j * Im
+
+        # Calculate the absolute value of the zeta function
+     
+        # Later in the code
+        if self.Zeta_3D_Buffer is None:
+            self.Zeta_3D_Buffer = np.abs(zeta(s))
+
+        # Create a 3D surface plot
+        fig = go.Figure(data=[go.Surface(z= self.Zeta_3D_Buffer, x=Re, y=Im)])
+
+        # Update plot layout
+        fig.update_layout(title='3D Plot of |ζ(s)|',
+                        scene = dict(
+                            xaxis_title='Re(s)',
+                            yaxis_title='Im(s)',
+                            zaxis_title='|ζ(s)|'))
+
+        self.display_plot(fig)
+    
+    def show_Zeta_3D_zeros(self):
+                # Define the real and imaginary parts of s
+        re_vals = np.linspace(-8, 2, 300)  # Reduced number of points
+        im_vals = np.linspace(-26, 26, 400) # Reduced range and number of points
+
+        # Create a meshgrid for the real and imaginary values
+        Re, Im = np.meshgrid(re_vals, im_vals)
+        s = Re + 1j * Im
+
+        # Calculate the absolute value of the zeta function
+        if self.Zeta_3D_Buffer_zeros is None:
+            self.Zeta_3D_Buffer_zeros = np.abs(zeta(s))
+
+        # Create a 3D surface plot
+        surface = go.Surface(z=self.Zeta_3D_Buffer_zeros, x=Re, y=Im, colorscale='Viridis', showscale=True)
+
+        # Highlight Trivial Zeros (where Re(s) = -2, -4, -6,...)
+        trivial_zeros_x = [-2, -4, -6, -8, -10]  # Known trivial zeros
+        trivial_zeros_y = [0] * len(trivial_zeros_x)
+        trivial_zeros_z = [0] * len(trivial_zeros_x)  # They should all be zero
+
+        trivial_zeros = go.Scatter3d(x=trivial_zeros_x, y=trivial_zeros_y, z=trivial_zeros_z,
+                                    mode='markers',
+                                    marker=dict(size=5, color='red'),
+                                    name='Trivial Zeros')
+
+        # Highlight Non-Trivial Zeros (e.g., first few on the critical line Re(s) = 0.5)
+        non_trivial_zeros_y = [-14.135, 14.135, -21.022, 21.022, -25.011, 25.011]  # First few non-trivial zeros
+        non_trivial_zeros_x = [0.5] * len(non_trivial_zeros_y)
+        non_trivial_zeros_z = [0] * len(non_trivial_zeros_y)  # They should all be zero
+
+        non_trivial_zeros = go.Scatter3d(x=non_trivial_zeros_x, y=non_trivial_zeros_y, z=non_trivial_zeros_z,
+                                        mode='markers',
+                                        marker=dict(size=5, color='blue'),
+                                        name='Non-Trivial Zeros')
+
+        # Combine the surface plot with the highlighted zeros
+        fig = go.Figure(data=[surface, trivial_zeros, non_trivial_zeros])
+
+        # Update plot layout
+        fig.update_layout(title='3D Plot of |ζ(s)| with Highlighted Zeros',
+                        scene=dict(
+                            xaxis_title='Re(s)',
+                            yaxis_title='Im(s)',
+                            zaxis_title='|ζ(s)|',
+                            zaxis=dict(range=[0, 10])))
         
+        self.display_plot(fig)
+    
     def display_plot(self, fig):
         # Save the plot as an HTML file in a temporary directory
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as f:
