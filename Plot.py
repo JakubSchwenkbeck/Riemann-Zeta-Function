@@ -4,10 +4,12 @@ import numpy as np
 
 import plotly.graph_objs as go # Plotly for graphs and plots
 
-from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton # PyWt5 for GUI and widgets
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton, QMainWindow, QDesktopWidget # PyWt5 for GUI and widgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QIcon
+
+
 import tempfile
 
 from Riemann_Zeta import *  # own zeta function
@@ -52,8 +54,16 @@ class RiemannZetaVisualizer(QWidget):
         self.web_view = QWebEngineView()
         layout.addWidget(self.web_view)
         
-        self.showMaximized()
-
+        # Get the screen size
+        screen = QDesktopWidget().screenGeometry()
+        width = screen.width()
+        height = screen.height()-100
+        
+        # Set the window size to match the screen size
+        self.resize(width, height)
+        
+        # Show the window with the title bar and borders
+        self.show()
 
         self.setLayout(layout)
         self.setWindowTitle('Riemann Hypothesis')
