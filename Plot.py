@@ -6,7 +6,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QIcon
 import tempfile
-import os
+from plotly.subplots import make_subplots
 
 
 
@@ -38,7 +38,7 @@ class RiemannZetaVisualizer(QWidget):
             ("Standard Zeta 2D", self.show_standard_zeta),
             ("complex Zeta 2D", self.plot_zeta_function),
             ("Complex Zeta 3D", self.show_Zeta_3D),
-            ("Complex Zeta 3D with zeros", self.show_Zeta_3D_zeros),# Add more plots as needed
+            ("Complex Zeta 3D with Focus on critical strip", self.show_Zeta_3D_critical_strip),# Add more plots as needed
         ]
 
         for plot_name, plot_func in plots: # init and add Buttons
@@ -66,13 +66,14 @@ class RiemannZetaVisualizer(QWidget):
         self.web_view = QWebEngineView()
         layout.addWidget(self.web_view)
         
-        self.resize(1200, 800)  # Width, Height in pixels
+        self.showMaximized()
+
 
         self.setLayout(layout)
         self.setWindowTitle('Riemann Hypothesis')
 
         # Start with the first plot
-        self.plot_zeta_function()
+        self.show_prim_approx()
         
         # Function to show the prime number approximations
     def show_prim_approx(self):
@@ -110,18 +111,57 @@ class RiemannZetaVisualizer(QWidget):
             self.PrimeApproxBuffer = [ydata_actual_primes,ydata_logarithmic_primes,ydata_LI]
 
     def show_standard_zeta(self):
-        
-        # Create trace for zeta function
+                # Define the range of σ (real part of s)
+        sigma = np.linspace(0.5, 1.5, 400)
+
+        # Define a range for t (imaginary part of s) for the slider
+        t_values = np.linspace(0.1, 50, 50)  # Slider will range from 0.1 to 50
+
+        # Initial value of t
+        initial_t = t_values[0]
+
+        # Calculate the initial zeta values for the initial t
+        zeta_values = np.array([standard_riemann_zeta(sigma + initial_t * 1j) for sigma in sigma])
+
+            #  Create the initial trace for the zeta function plot
         trace = go.Scatter(x=sigma, y=np.abs(zeta_values), mode='lines', name="Zeta Function", line=dict(color='black', width=2))
 
-        # Create layout and figure
-        layout = go.Layout(title="Magnitude of the Riemann Zeta Function for t=14.134725", xaxis_title="σ", yaxis_title="|ζ(σ+it)|", legend_title="Legend")
+        # Add a vertical line at σ = 1
+        line = go.layout.Shape(type="line", x0=1, y0=0, x1=1, y1=max(np.abs(zeta_values)),
+                            line=dict(color="red", width=2, dash="dash"))
+
+        # Create the layout and figure
+        layout = go.Layout(title="Magnitude of the Riemann Zeta Function with Variable t",
+                        xaxis_title="σ", yaxis_title="|ζ(σ+it)|", legend_title="Legend",
+                        shapes=[line])
+
         fig = go.Figure(data=[trace], layout=layout)
 
-        # Add a vertical line at σ = 1
-        fig.add_shape(type="line", x0=1, y0=0, x1=1, y1=max(np.abs(zeta_values)), line=dict(color="red", width=2, dash="dash"))
-        
-        # Render the plot and display it in the web view
+        # Add a slider to adjust t
+        steps = []
+        for t in t_values:
+            # Update the zeta values for each t
+            zeta_values = np.array([standard_riemann_zeta(sigma + t * 1j) for sigma in sigma])
+            
+            step = dict(
+                method="update",
+                args=[{"y": [np.abs(zeta_values)]},  # Update the y-data
+                    {"shapes[0].y1": max(np.abs(zeta_values))}],  # Update the height of the vertical line
+                label=f't = {t:.2f}'
+            )
+            steps.append(step)
+
+        sliders = [dict(
+            active=0,
+            currentvalue={"prefix": "t: "},
+            pad={"t": 50},
+            steps=steps
+        )]
+
+# Add the slider to the layout
+        fig.update_layout(sliders=sliders)
+
+# Render the plot and display it in the web view
         self.display_plot(fig)
 
     def plot_zeta_function(self):
@@ -192,7 +232,7 @@ class RiemannZetaVisualizer(QWidget):
         self.display_plot(fig)
     def show_Zeta_3D(self):
         # Define the real and imaginary parts of s
-        re_vals = np.linspace(0, 1, 200)
+        re_vals = np.linspace(-1, 1, 200)
         im_vals = np.linspace(-30, 30, 400)
 
         # Create a meshgrid for the real and imaginary values
@@ -217,53 +257,103 @@ class RiemannZetaVisualizer(QWidget):
 
         self.display_plot(fig)
     
-    def show_Zeta_3D_zeros(self):
-                # Define the real and imaginary parts of s
-        re_vals = np.linspace(-8, 2, 300)  # Reduced number of points
-        im_vals = np.linspace(-26, 26, 400) # Reduced range and number of points
+    def show_Zeta_3D_critical_strip(self):
+                # Define the real and imaginary parts of s, focusing on the critical strip
+        re_vals = np.linspace(0, 1, 200)  # Focus on 0 < Re(s) < 1
+        im_vals = np.linspace(-30, 30, 400)  # Retain range for Im(s)
 
         # Create a meshgrid for the real and imaginary values
         Re, Im = np.meshgrid(re_vals, im_vals)
         s = Re + 1j * Im
 
-        # Calculate the absolute value of the zeta function
+        # Calculate the logarithm of the absolute value of the zeta function to manage large values
         if self.Zeta_3D_Buffer_zeros is None:
             self.Zeta_3D_Buffer_zeros = np.abs(zeta(s))
 
-        # Create a 3D surface plot
+        # Create a 3D surface plot with a color scale suitable for highlighting small variations
         surface = go.Surface(z=self.Zeta_3D_Buffer_zeros, x=Re, y=Im, colorscale='Viridis', showscale=True)
 
-        # Highlight Trivial Zeros (where Re(s) = -2, -4, -6,...)
-        trivial_zeros_x = [-2, -4, -6, -8, -10]  # Known trivial zeros
-        trivial_zeros_y = [0] * len(trivial_zeros_x)
-        trivial_zeros_z = [0] * len(trivial_zeros_x)  # They should all be zero
+        # Highlight Trivial Zeros (Note: Trivial zeros occur outside the critical strip)
+        trivial_zeros_x = []
+        trivial_zeros_y = []
+        trivial_zeros_z = []
 
-        trivial_zeros = go.Scatter3d(x=trivial_zeros_x, y=trivial_zeros_y, z=trivial_zeros_z,
-                                    mode='markers',
-                                    marker=dict(size=5, color='red'),
-                                    name='Trivial Zeros')
-
-        # Highlight Non-Trivial Zeros (e.g., first few on the critical line Re(s) = 0.5)
+        # Highlight Non-Trivial Zeros (first few on the critical line Re(s) = 0.5)
         non_trivial_zeros_y = [-14.135, 14.135, -21.022, 21.022, -25.011, 25.011]  # First few non-trivial zeros
         non_trivial_zeros_x = [0.5] * len(non_trivial_zeros_y)
-        non_trivial_zeros_z = [0] * len(non_trivial_zeros_y)  # They should all be zero
+        non_trivial_zeros_z = [0] * len(non_trivial_zeros_y)  # They should all be zero on the critical line
 
         non_trivial_zeros = go.Scatter3d(x=non_trivial_zeros_x, y=non_trivial_zeros_y, z=non_trivial_zeros_z,
                                         mode='markers',
                                         marker=dict(size=5, color='blue'),
                                         name='Non-Trivial Zeros')
+        # Add the critical line at Re(s) = 0.5
+        critical_line = go.Scatter3d(x=[0.5] * len(im_vals), y=im_vals, z=[0] * len(im_vals),
+                             mode='lines',
+                             line=dict(color='red', width=3),
+                             name='Critical Line Re(s) = 0.5')
 
         # Combine the surface plot with the highlighted zeros
-        fig = go.Figure(data=[surface, trivial_zeros, non_trivial_zeros])
+        fig = go.Figure(data=[surface, non_trivial_zeros,critical_line])
 
         # Update plot layout
-        fig.update_layout(title='3D Plot of |ζ(s)| with Highlighted Zeros',
+        fig.update_layout(title='3D Plot of log(|ζ(s)|) in the Critical Strip with Highlighted Zeros',
                         scene=dict(
                             xaxis_title='Re(s)',
                             yaxis_title='Im(s)',
-                            zaxis_title='|ζ(s)|',
-                            zaxis=dict(range=[0, 10])))
-        
+                            zaxis_title='log(|ζ(s)|)'))
+    # Add a text annotation (initially hidden)
+        annotation_text = "This is a 3D plot of the Riemann zeta function |ζ(s)|.\n" \
+                  "The plot focuses on the critical strip where 0 < Re(s) < 1.\n" \
+                  "Highlighted are some of the first non-trivial zeros on the critical line (Re(s) = 0.5)."
+
+        fig.update_layout(
+            annotations=[
+                dict(
+                    text=annotation_text,
+                    xref="paper", yref="paper",
+                    x=0.05, y=0.95,
+                    showarrow=False,
+                    font=dict(size=12, color="black"),
+                    align="left",
+                    bordercolor="black",
+                    borderwidth=1,
+                    borderpad=4,
+                    bgcolor="white",
+                    opacity=0,  # Initially hidden
+                    name="annotation"
+                )
+            ]
+        )
+
+        # Add buttons to show/hide the annotation
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    type="buttons",
+                    direction="left",
+                    buttons=[
+                        dict(
+                            args=[{"annotations[0].opacity": 1}],
+                            label="Show Info",
+                            method="relayout"
+                        ),
+                        dict(
+                            args=[{"annotations[0].opacity": 0}],
+                            label="Hide Info",
+                            method="relayout"
+                        )
+                    ],
+                    pad={"r": 10, "t": 10},
+                    showactive=True,
+                    x=0.5,
+                    xanchor="center",
+                    y=1.2,
+                    yanchor="top"
+                )
+            ]
+        )
+
         self.display_plot(fig)
     
     def display_plot(self, fig):
