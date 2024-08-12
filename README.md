@@ -13,4 +13,7 @@ Using **Python** together with NumPy, Plotly and PyQt5 this project creates a GU
 
 ![Screenshot 2024-08-11 165127](https://github.com/user-attachments/assets/8fc01270-d4cd-4745-b306-75ccd8c18283)
 
+- Dirichlets L-Function for modulus 4
+
+  ![image](https://github.com/user-attachments/assets/a7e98e93-c64b-4747-b23a-f921761d0fb6)
 
