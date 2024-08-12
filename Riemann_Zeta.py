@@ -114,3 +114,60 @@ def calculate_zeta_function(x_min, x_max, y_min, y_max, resolution=100):
     z = zeta(complex_input)
 
     return x, y, z
+
+
+# Function to compute Dirichlet L-function for a given residue mod 4
+def dirichlet_L_function(residue, s, num_terms=100):
+    """
+    Compute the Dirichlet L-function for a specified residue class modulo 4.
+    
+    Args:
+        residue (int): The residue class (1 or 3) for which to compute the L-function.
+        s (complex): The complex number input for the L-function.
+        num_terms (int): The number of terms to use in the series approximation.
+
+    Returns:
+        complex: The value of the Dirichlet L-function at s.
+    """
+    if residue not in [1, 3]:
+        raise ValueError("Residue must be either 1 or 3.")
+    
+    # Initialize the sum
+    sum_value = 0.0
+
+    for n in range(1, num_terms + 1):
+        if residue == 1 and n % 4 == 1:
+            sum_value += 1 / n**s
+        elif residue == 3 and n % 4 == 3:
+            sum_value += 1 / n**s
+
+    return sum_value
+
+# Example usage of Dirichlet L-function
+def calculate_dirichlet_L_function(x_min, x_max, y_min, y_max, residue, resolution=100):
+    """
+    Calculate the Dirichlet L-function values over a grid defined by x_min, x_max, y_min, y_max.
+
+    Args:
+        x_min (float): Minimum x value (real part).
+        x_max (float): Maximum x value (real part).
+        y_min (float): Minimum y value (imaginary part).
+        y_max (float): Maximum y value (imaginary part).
+        residue (int): The residue class (1 or 3) for the L-function.
+        resolution (int): Number of points in each direction.
+
+    Returns:
+        x (numpy.ndarray): Real parts.
+        y (numpy.ndarray): Imaginary parts.
+        z (numpy.ndarray): L-function values.
+    """
+    # Create a grid of complex numbers
+    real_parts = np.linspace(x_min, x_max, resolution)
+    imaginary_parts = np.linspace(y_min, y_max, resolution)
+    x, y = np.meshgrid(real_parts, imaginary_parts)
+    complex_input = x + 1j * y
+
+    # Calculate L-function values for the given residue
+    z = np.array([[dirichlet_L_function(residue, s) for s in row] for row in complex_input])
+
+    return x, y, z

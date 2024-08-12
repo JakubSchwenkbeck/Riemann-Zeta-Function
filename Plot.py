@@ -41,7 +41,8 @@ class RiemannZetaVisualizer(QWidget):
             ("Standard Zeta-function in 2D with variable magnitude", self.show_standard_zeta),
             ("Complex Zeta-function in 2D plane", self.plot_zeta_function),
             ("Complex Zeta-function in 3D", self.show_Zeta_3D),
-            ("Complex Zeta-function in 3D with Focus on critical strip", self.show_Zeta_3D_critical_strip),# Add more plots as needed
+            ("Complex Zeta-function in 3D with Focus on critical strip", self.show_Zeta_3D_critical_strip),
+            ("Dirichlet L-function for residues mod 4", self.show_dirichlet) ,# Add more plots as needed
         ]
 
         for plot_name, plot_func in plots: # init and add Buttons
@@ -357,6 +358,39 @@ class RiemannZetaVisualizer(QWidget):
 
         self.display_plot(fig)
     
+     # New method to visualize Dirichlet L-functions
+    def show_dirichlet(self):
+        # Define the range for s = σ + it
+        sigma = np.linspace(0, 1, 400)  # Real part
+        t = np.linspace(-30, 30, 400)    # Imaginary part
+
+        # Create a meshgrid for the values of s
+        S_sigma, S_t = np.meshgrid(sigma, t)
+        s = S_sigma + 1j * S_t
+
+        # Calculate the Dirichlet L-functions for residues 1 and 3
+        L_residue_1 = np.array([[dirichlet_L_function(1, val) for val in row] for row in s])
+        L_residue_3 = np.array([[dirichlet_L_function(3, val) for val in row] for row in s])
+
+        # Create traces for both residues
+        trace1 = go.Surface(z=np.abs(L_residue_1), x=S_sigma, y=S_t, colorscale='Viridis', name='|L(s)| for 4k + 1')
+        trace2 = go.Surface(z=np.abs(L_residue_3), x=S_sigma, y=S_t, colorscale='Cividis', name='|L(s)| for 4k + 3', opacity=0.8)
+
+        # Create layout for the plot
+        layout = go.Layout(
+            title='Dirichlet L-functions for Residues Modulo 4',
+            scene=dict(
+                xaxis_title='Re(s)',
+                yaxis_title='Im(s)',
+                zaxis_title='|L(s)|'
+            )
+        )
+
+        # Create a figure and add the traces
+        fig = go.Figure(data=[trace1, trace2], layout=layout)
+
+        # Display the plot
+        self.display_plot(fig)
     def display_plot(self, fig):
         # Save the plot as an HTML file in a temporary directory
         with tempfile.NamedTemporaryFile(delete=False, suffix='.html') as f:
