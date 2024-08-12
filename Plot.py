@@ -4,7 +4,7 @@ import numpy as np
 
 import plotly.graph_objs as go # Plotly for graphs and plots
 
-from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton, QMainWindow, QDesktopWidget # PyWt5 for GUI and widgets
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QPushButton, QLabel  , QDesktopWidget # PyWt5 for GUI and widgets
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QIcon
@@ -35,45 +35,62 @@ class RiemannZetaVisualizer(QWidget):
         
         layout = QVBoxLayout()
 
-        self.plot_buttons = [] # Buttons to switch between plots
-        plots = [
-            ("Comparisions of Prime Number Approximations", self.show_prim_approx),
-            ("Standard Zeta-function in 2D with variable magnitude", self.show_standard_zeta),
-            ("Complex Zeta-function in 2D plane", self.plot_zeta_function),
-            ("Complex Zeta-function in 3D", self.show_Zeta_3D),
-            ("Complex Zeta-function in 3D with Focus on critical strip", self.show_Zeta_3D_critical_strip),
-            ("Dirichlet L-function for residues mod 4", self.show_dirichlet) ,# Add more plots as needed
-        ]
-
-        for plot_name, plot_func in plots: # init and add Buttons
-            button = QPushButton(plot_name, self)
-            button.clicked.connect(lambda checked, func=plot_func: func())
-            layout.addWidget(button)
-            self.plot_buttons.append(button)
-
-        # Web view to display Plotly plots
         self.web_view = QWebEngineView()
         layout.addWidget(self.web_view)
-        
-        # Get the screen size
-        screen = QDesktopWidget().screenGeometry()
-        width = screen.width()
-        height = screen.height()-100
-        
-        # Set the window size to match the screen size
-        self.resize(width, height)
-        
-        # Show the window with the title bar and borders
-        self.show()
+
+        self.info_label = QLabel("")  # Label for info card
+        self.info_label.setStyleSheet("""
+            background-color: lightyellow;
+            padding: 5px;
+            font-size: 11pt;
+            max-height: 60px;
+        """)
+        layout.addWidget(self.info_label)
+        self.info_label.hide()  # Start with the info label hidden
+
+        plots = [
+            ("Prime Approximation Comparison", self.show_prim_approx, "This plot delves into the comparison of actual prime numbers with mathematical approximations like the logarithmic prime number approximation and the Li function."),
+            ("2D Zeta Function", self.show_standard_zeta, "This plot illustrates the magnitude of the Riemann zeta function, exploring its behavior across different values of the real and imaginary components."),
+            ("2D Complex Zeta Function", self.plot_zeta_function, "Visualizing the Riemann zeta function across the complex plane, this plot reveals the intricate relationship between the real and imaginary parts."),
+            ("3D Zeta Function", self.show_Zeta_3D, "A 3D representation of the Riemann zeta function's magnitude, highlighting the function's behavior in three-dimensional space."),
+            ("Critical Strip Zeta 3D", self.show_Zeta_3D_critical_strip, "This 3D plot focuses on the critical strip of the Riemann zeta function, an area of deep mathematical interest due to its connection with the Riemann Hypothesis."),
+            ("Dirichlet L-function", self.show_dirichlet, "The Dirichlet L-functions for residues modulo 4 are visualized in this plot, revealing the periodic properties and zero distributions of these important functions.")
+        ]
+
+
+        for plot_name, plot_func, info_text in plots:
+            button = QPushButton(plot_name, self)
+            button.clicked.connect(lambda checked, func=plot_func, text=info_text: self.display_plot_and_info(func, text))
+            layout.addWidget(button)
+
+        # Info toggle button
+        self.toggle_button = QPushButton("Show Info", self)
+        self.toggle_button.clicked.connect(self.toggle_info)
+        layout.addWidget(self.toggle_button)
 
         self.setLayout(layout)
         self.setWindowTitle('Riemann Hypothesis')
 
         # Start with the first plot
         self.show_prim_approx()
-        
-        # Function to show the prime number approximations
+
+    def display_plot_and_info(self, plot_func, info_text):
+        plot_func()
+        self.info_label.setText(info_text)
+        self.toggle_button.setText("Hide Info")
+        self.info_label.show()
+
+    def toggle_info(self):
+        if self.info_label.isVisible():
+            self.info_label.hide()
+            self.toggle_button.setText("Show Info")
+        else:
+            self.info_label.show()
+            self.toggle_button.setText("Hide Info")
+
     def show_prim_approx(self):
+            
+       
         limit = self.PrimeApproxLimit
         # Generate x data
         xdata = np.arange(0, limit)
@@ -106,7 +123,8 @@ class RiemannZetaVisualizer(QWidget):
         self.display_plot(fig)
         if(self.PrimeApproxBuffer == 0):
             self.PrimeApproxBuffer = [ydata_actual_primes,ydata_logarithmic_primes,ydata_LI]
-
+            
+    
     def show_standard_zeta(self):
         # Define the range of σ (real part of s)
         sigma = np.linspace(0.5, 1.5, 400)
@@ -302,59 +320,7 @@ class RiemannZetaVisualizer(QWidget):
                             xaxis_title='Re(s)',
                             yaxis_title='Im(s)',
                             zaxis_title='log(|ζ(s)|)'))
-    # Add a text annotation (initially hidden)
-        annotation_text = "This is a 3D plot of the Riemann zeta function |ζ(s)|.\n" \
-                  "The plot focuses on the critical strip where 0 < Re(s) < 1.\n" \
-                  "Highlighted are some of the first non-trivial zeros on the critical line (Re(s) = 0.5)."
-
-        # Add information Text
-        
-        fig.update_layout(
-            annotations=[
-                dict(
-                    text=annotation_text,
-                    xref="paper", yref="paper",
-                    x=0.05, y=0.95,
-                    showarrow=False,
-                    font=dict(size=12, color="black"),
-                    align="left",
-                    bordercolor="black",
-                    borderwidth=1,
-                    borderpad=4,
-                    bgcolor="white",
-                    opacity=0,  # Initially hidden
-                    name="annotation"
-                )
-            ]
-        )
-
-        # Add buttons to show/hide the annotation
-        fig.update_layout(
-            updatemenus=[
-                dict(
-                    type="buttons",
-                    direction="left",
-                    buttons=[
-                        dict(
-                            args=[{"annotations[0].opacity": 1}],
-                            label="Show Info",
-                            method="relayout"
-                        ),
-                        dict(
-                            args=[{"annotations[0].opacity": 0}],
-                            label="Hide Info",
-                            method="relayout"
-                        )
-                    ],
-                    pad={"r": 10, "t": 10},
-                    showactive=True,
-                    x=0.5,
-                    xanchor="center",
-                    y=1.2,
-                    yanchor="top"
-                )
-            ]
-        )
+    
 
         self.display_plot(fig)
     
